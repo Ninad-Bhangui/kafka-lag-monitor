@@ -10,6 +10,7 @@ import argparse
 KafkaEntry = namedtuple("KafkaEntry", "group topic partition lag")
 RemoteDetails = namedtuple("RemoteDetails", "username hostname key_filename")
 
+
 def build_parser():
     parser = argparse.ArgumentParser(
         prog="kafka-group-lag-aggregate-monitor",
@@ -18,11 +19,13 @@ def build_parser():
     parser.add_argument(
         "--remote",
         help="Kafka remote Host details Can be of the format ubuntu@127.0.0.1",
-        required=True
+        required=True,
     )
     parser.add_argument(
-        "-i", "--key-filename", help="private key path. (Used with --remote)",
-        required=True
+        "-i",
+        "--key-filename",
+        help="private key path. (Used with --remote)",
+        required=True,
     )
     parser.add_argument(
         "-v",
@@ -36,16 +39,27 @@ def build_parser():
         help="Format of output (Default: plain), other options are tabulate tablefmt options",
         default="plain",
     )
-    parser.add_argument("--groups", help="Comma seperated list of kafka groups", nargs="+", required=True)
-    parser.add_argument("--bootstrap-server", help="Kafka bootstrap server", required=True)
+    parser.add_argument(
+        "--groups",
+        help="Comma seperated list of kafka groups",
+        nargs="+",
+        required=True,
+    )
+    parser.add_argument(
+        "--bootstrap-server", help="Kafka bootstrap server", required=True
+    )
     return parser
+
 
 def parse_remote(remote: str, keyfile: str) -> RemoteDetails:
     if "@" in remote:
         [username, hostname] = remote.split("@")
         return RemoteDetails(username=username, hostname=hostname, key_filename=keyfile)
     else:
-        raise Exception("Invalid remote, should be of the format username@ip-address, example ubuntu@127.0.0.1")
+        raise Exception(
+            "Invalid remote, should be of the format username@ip-address, example ubuntu@127.0.0.1"
+        )
+
 
 def setup_logger(verbose=False):
     level = logging.INFO if verbose else logging.WARNING
@@ -53,9 +67,6 @@ def setup_logger(verbose=False):
         level=level,
         format="%(asctime)s :: %(levelname)s :: %(module)s -> %(funcName)s :: %(message)s",
     )
-
-
-
 
 
 def combine_kafka_outputs(outputs):
@@ -108,7 +119,9 @@ def run_remote_commands(remote_details: RemoteDetails, commands: List[str]):
     outputs = []
     try:
         ssh.connect(
-            remote_details.hostname, username=remote_details.username, key_filename=remote_details.key_filename
+            remote_details.hostname,
+            username=remote_details.username,
+            key_filename=remote_details.key_filename,
         )
         for command in commands:
             logging.info(f"running command {command}")
