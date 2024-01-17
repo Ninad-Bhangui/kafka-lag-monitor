@@ -133,7 +133,6 @@ def main():
     if len(sys.argv) == 1:
         parser.print_help()
         parser.exit()
-    print(args)
     setup_logger(args.verbose)
     logging.info("Starting")
     # Live run
@@ -153,7 +152,7 @@ def main():
     # df = combine_kafka_outputs(command_outputs)
 
     # This is final output to stdout, this is the only place to use print. Use loggers everywhere else
-    print(tabulate(df, headers="keys", tablefmt="plain", showindex=False))
+    print(tabulate(df, headers="keys", tablefmt=args.tablefmt, showindex=False))
 
 
 if __name__ == "__main__":
