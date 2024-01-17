@@ -1,7 +1,7 @@
 # Kafka group lag aggregate monitor
 This utility will currently ssh to a remote machine with kafka running on it, run `kafka-consumer-groups`, for multiple groups, collect the output, group by group and topic and finally print average and max lag.
 
-Currently Tested on: Python 3.11.3
+Currently Tested on: Python 3.11.3 and macos
 
 ## Installation
 
