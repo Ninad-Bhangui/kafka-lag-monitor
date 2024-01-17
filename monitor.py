@@ -128,29 +128,29 @@ def run_remote_commands(remote_details: RemoteDetails, commands: List[str]):
 
 
 def main():
-    # parser = build_parser()
-    # args = parser.parse_args()
-    # if len(sys.argv) == 1:
-    #     parser.print_help()
-    #     parser.exit()
-    # print(args)
-    # setup_logger(args.verbose)
-    # logging.info("Starting")
-    # # Live run
-    # commands = create_commands(args.groups, args.bootstrap_server)
-    # remote_details = parse_remote(args.remote, args.key_filename)
-    # command_outputs = run_remote_commands(remote_details, commands)
-    # df = combine_kafka_outputs(command_outputs)
+    parser = build_parser()
+    args = parser.parse_args()
+    if len(sys.argv) == 1:
+        parser.print_help()
+        parser.exit()
+    print(args)
+    setup_logger(args.verbose)
+    logging.info("Starting")
+    # Live run
+    commands = create_commands(args.groups, args.bootstrap_server)
+    remote_details = parse_remote(args.remote, args.key_filename)
+    command_outputs = run_remote_commands(remote_details, commands)
+    df = combine_kafka_outputs(command_outputs)
 
     # Local testing
-    file_list = ["example1.txt", "example2.txt"]
-    df = pd.DataFrame()
-    command_outputs = []
-    for filename in file_list:
-        with open(filename) as fp:
-            lines = fp.readlines()
-            command_outputs.append(lines)
-    df = combine_kafka_outputs(command_outputs)
+    # file_list = ["example1.txt", "example2.txt"]
+    # df = pd.DataFrame()
+    # command_outputs = []
+    # for filename in file_list:
+    #     with open(filename) as fp:
+    #         lines = fp.readlines()
+    #         command_outputs.append(lines)
+    # df = combine_kafka_outputs(command_outputs)
 
     # This is final output to stdout, this is the only place to use print. Use loggers everywhere else
     print(tabulate(df, headers="keys", tablefmt="plain", showindex=False))
