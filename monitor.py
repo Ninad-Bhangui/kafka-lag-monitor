@@ -16,40 +16,60 @@ def build_parser():
         prog="kafka-group-lag-aggregate-monitor",
         description="Aggregates lag across multiple groups over a remote server",
     )
-    parser.add_argument(
+    subparsers = parser.add_subparsers(title="subcommands", dest="subcommand")
+    build_remote_parser(subparsers)
+    build_stdin_parser(subparsers)
+    return parser
+
+def build_remote_parser(subparsers):
+    remote_parser = subparsers.add_parser("remote-mode", help="Takes a list of kafka groups and runs commands on remote using ssh")
+    remote_parser.add_argument(
         "--remote",
         help="Kafka remote Host details Can be of the format ubuntu@127.0.0.1",
         required=True,
     )
-    parser.add_argument(
+    remote_parser.add_argument(
         "-i",
         "--key-filename",
         help="private key path. (Used with --remote)",
         required=True,
     )
-    parser.add_argument(
+    remote_parser.add_argument(
+        "--groups",
+        help="Comma seperated list of kafka groups",
+        nargs="+",
+        required=True,
+    )
+    remote_parser.add_argument(
+        "--bootstrap-server", help="Kafka bootstrap server", required=True
+    )
+    remote_parser.add_argument(
         "-v",
         "--verbose",
         help="Verbose",
         default=False,
         action=argparse.BooleanOptionalAction,
     )
-    parser.add_argument(
+    remote_parser.add_argument(
         "--tablefmt",
         help="Format of output (Default: plain), other options are tabulate tablefmt options",
         default="plain",
     )
-    parser.add_argument(
-        "--groups",
-        help="Comma seperated list of kafka groups",
-        nargs="+",
-        required=True,
-    )
-    parser.add_argument(
-        "--bootstrap-server", help="Kafka bootstrap server", required=True
-    )
-    return parser
 
+def build_stdin_parser(subparsers):
+    stdin_parser = subparsers.add_parser("stdin-mode", help="expects output of kafka-consumer-groups piped to stdin")
+    stdin_parser.add_argument(
+        "-v",
+        "--verbose",
+        help="Verbose",
+        default=False,
+        action=argparse.BooleanOptionalAction,
+    )
+    stdin_parser.add_argument(
+        "--tablefmt",
+        help="Format of output (Default: plain), other options are tabulate tablefmt options",
+        default="plain",
+    )
 
 def parse_remote(remote: str, keyfile: str) -> RemoteDetails:
     if "@" in remote:
@@ -109,8 +129,6 @@ def create_commands(groups: List[str], bootstrap_server: str):
     ]
     return commands
 
-
-# @timeit
 def run_remote_commands(remote_details: RemoteDetails, commands: List[str]):
     print(remote_details)
     ssh = paramiko.SSHClient()
@@ -143,18 +161,21 @@ def run_remote_commands(remote_details: RemoteDetails, commands: List[str]):
 def main():
     parser = build_parser()
     args = parser.parse_args()
-    if len(sys.argv) == 1:
-        parser.print_help()
-        parser.exit()
     setup_logger(args.verbose)
     logging.info("Starting")
-    # Live run
-    commands = create_commands(args.groups, args.bootstrap_server)
-    remote_details = parse_remote(args.remote, args.key_filename)
-    command_outputs = run_remote_commands(remote_details, commands)
-    df = combine_kafka_outputs(command_outputs)
 
-    # Local testing
+    if args.subcommand == "remote-mode":
+        commands = create_commands(args.groups, args.bootstrap_server)
+        remote_details = parse_remote(args.remote, args.key_filename)
+        command_outputs = run_remote_commands(remote_details, commands)
+        df = combine_kafka_outputs(command_outputs)
+    
+    elif args.subcommand == "stdin-mode":
+        lines = sys.stdin.readlines()
+        df = combine_kafka_outputs([lines])
+
+
+    # # Local testing
     # file_list = ["example1.txt", "example2.txt"]
     # df = pd.DataFrame()
     # command_outputs = []
