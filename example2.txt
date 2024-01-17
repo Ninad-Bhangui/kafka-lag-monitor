@@ -1,0 +1,8 @@
+
+GROUP                                    TOPIC               PARTITION  CURRENT-OFFSET  LOG-END-OFFSET  LAG             CONSUMER-ID                                                                               HOST            CLIENT-ID
+consumer-test-group-2 topic_1 1         1037243472      1037243472      0               consumer-consumer-test-group-2-14-ca4ac8c1-5746-4f5e-a593-a85cdfe4d869 /127.0.0.1 consumer-consumer-test-group-2-14
+consumer-test-group-2 topic_1 2         1108395882      1108395882      0               consumer-consumer-test-group-2-15-2f517ba8-70a1-4d6b-8c73-5f8296b1cd50 /127.0.0.1 consumer-consumer-test-group-2-15
+consumer-test-group-2 topic_2 1          186395693       186395693       0               consumer-consumer-test-group-2-11-ac52ec2e-03ed-4702-af85-193773fa73f4 /127.0.0.1 consumer-consumer-test-group-2-11
+consumer-test-group-2 topic_2 2         178288539       178288539       0               consumer-consumer-test-group-2-14-d8aee246-0864-4bac-ade6-383be022eb26 /127.0.0.1 consumer-consumer-test-group-2-14
+consumer-test-group-2 topic_4 1          4670984264      4670984264      0               consumer-consumer-test-group-2-1-1cc8a3fa-0bca-4c6e-9e69-a050246cfd54  /127.0.0.1 consumer-consumer-test-group-2-1
+consumer-test-group-2 topic_3 1          313560151       313560195       44              consumer-consumer-test-group-2-1-b42116d0-3a6f-4e4e-99f1-f0f42caf6508  /127.0.0.1 consumer-consumer-test-group-2-1

@@ -1,0 +1,4 @@
+
+GROUP                              TOPIC                     PARTITION  CURRENT-OFFSET  LOG-END-OFFSET  LAG             CONSUMER-ID                                                                        HOST            CLIENT-ID
+consumer-test-group example_topic 1         4020409750      4020409912      162             consumer-test-4-ca4ac8c1-5746-4f5e-a593-a85cdfe4d869 /127.0.0.1 consumer-test-4
+consumer-test-group example_topic 2         3574354890      3574355347      457             consumer-test-2-2f517ba8-70a1-4d6b-8c73-5f8296b1cd50 /127.0.0.1 consumer-test-2
