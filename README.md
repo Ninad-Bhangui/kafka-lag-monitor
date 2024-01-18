@@ -23,7 +23,7 @@ cat examples/example1.txt | kafka-lag-monitor stdin-mode
 
 ### remote-mode
 ```bash
-kafka-lag-monitor -v --remote ubuntu@127.0.0.1 -i ~/.ssh/key.pem --bootstrap-server 127.0.0.1:9000 --groups group1 group2
+kafka-lag-monitor -v --remote ubuntu@127.0.0.1 -i ~/.ssh/key.pem --bootstrap-server 127.0.0.1:9000 --group group1 --group group2
 ```
 
 ## Setup locally
