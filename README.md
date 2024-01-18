@@ -8,9 +8,7 @@ Currently Tested on: Python 3.11.3 and macos
 ## Installation
 
 ```bash
-python -m venv .venv
-source .venv/bin/activate
-pip install -r requirements.txt
+pip install kafka-lag-monitor
 ```
 
 ## Run
@@ -18,14 +16,25 @@ pip install -r requirements.txt
 ### stdin-mode
 Run the below to get a general idea of how the output would look like.
 ```bash
-cat examples/example1.txt | python monitor.py stdin-mode
+cat examples/example1.txt | kafka-lag-monitor stdin-mode
 ```
 1. Add option -v to get verbose output
 2. Try option --tablefmt psql to get tabular output just like psql. (Can try any format supported [here](https://github.com/astanin/python-tabulate#table-format))
 
 ### remote-mode
 ```bash
-python monitor.py remote-mode -v --remote ubuntu@127.0.0.1 -i ~/.ssh/key.pem --bootstrap-server 127.0.0.1:9000 --groups group1 group2
+kafka-lag-monitor -v --remote ubuntu@127.0.0.1 -i ~/.ssh/key.pem --bootstrap-server 127.0.0.1:9000 --groups group1 group2
+```
+
+## Setup locally
+
+### Install dependancies
+```
+python -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+pip3 install poetry
+poetry install
 ```
 
 ## TODO
