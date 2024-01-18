@@ -10,6 +10,23 @@ import argparse
 KafkaEntry = namedtuple("KafkaEntry", "group topic partition lag")
 RemoteDetails = namedtuple("RemoteDetails", "username hostname key_filename")
 
+def main():
+    parser = build_parser()
+    args = parser.parse_args()
+    setup_logger(args.verbose)
+    logging.info("Starting")
+
+    if args.subcommand == "remote-mode":
+        commands = create_commands(args.groups, args.bootstrap_server)
+        remote_details = parse_remote(args.remote, args.key_filename)
+        command_outputs = run_remote_commands(remote_details, commands)
+        df = parse_and_agg_kafka_outputs(command_outputs)
+    
+    elif args.subcommand == "stdin-mode":
+        lines = sys.stdin.readlines()
+        df = parse_and_agg_kafka_outputs([lines])
+
+    print(tabulate(df, headers="keys", tablefmt=args.tablefmt, showindex=False))
 
 def build_parser():
     parser = argparse.ArgumentParser(
@@ -71,6 +88,20 @@ def build_stdin_parser(subparsers):
         default="plain",
     )
 
+def setup_logger(verbose=False):
+    level = logging.INFO if verbose else logging.WARNING
+    logging.basicConfig(
+        level=level,
+        format="%(asctime)s :: %(levelname)s :: %(module)s -> %(funcName)s :: %(message)s",
+    )
+
+def create_commands(groups: List[str], bootstrap_server: str):
+    commands = [
+        f"kafka-consumer-groups --bootstrap-server {bootstrap_server} --describe --group {group}"
+        for group in groups
+    ]
+    return commands
+
 def parse_remote(remote: str, keyfile: str) -> RemoteDetails:
     if "@" in remote:
         [username, hostname] = remote.split("@")
@@ -80,16 +111,35 @@ def parse_remote(remote: str, keyfile: str) -> RemoteDetails:
             "Invalid remote, should be of the format username@ip-address, example ubuntu@127.0.0.1"
         )
 
+def run_remote_commands(remote_details: RemoteDetails, commands: List[str]):
+    print(remote_details)
+    ssh = paramiko.SSHClient()
+    ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
 
-def setup_logger(verbose=False):
-    level = logging.INFO if verbose else logging.WARNING
-    logging.basicConfig(
-        level=level,
-        format="%(asctime)s :: %(levelname)s :: %(module)s -> %(funcName)s :: %(message)s",
-    )
+    outputs = []
+    try:
+        ssh.connect(
+            remote_details.hostname,
+            username=remote_details.username,
+            key_filename=remote_details.key_filename,
+        )
+        for command in commands:
+            logging.info(f"running command {command}")
+            _, stdout, stderr = ssh.exec_command(command)
+            errors = stderr.readlines()
+            output = stdout.readlines()
+            outputs.append(output)
+            if errors:
+                raise Exception(errors)
+            # print(output)
+        return outputs
+    except Exception as e:
+        logging.error(f"Error: {e}")
+        raise
+    finally:
+        ssh.close()
 
-
-def combine_kafka_outputs(outputs):
+def parse_and_agg_kafka_outputs(outputs):
     df = pd.DataFrame()
     for output in outputs:
         kafka_entries = parse_kafka_output(output)
@@ -122,71 +172,7 @@ def aggregate_kafka_output(kafka_entries):
     return agg_df
 
 
-def create_commands(groups: List[str], bootstrap_server: str):
-    commands = [
-        f"kafka-consumer-groups --bootstrap-server {bootstrap_server} --describe --group {group}"
-        for group in groups
-    ]
-    return commands
 
-def run_remote_commands(remote_details: RemoteDetails, commands: List[str]):
-    print(remote_details)
-    ssh = paramiko.SSHClient()
-    ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-
-    outputs = []
-    try:
-        ssh.connect(
-            remote_details.hostname,
-            username=remote_details.username,
-            key_filename=remote_details.key_filename,
-        )
-        for command in commands:
-            logging.info(f"running command {command}")
-            _, stdout, stderr = ssh.exec_command(command)
-            errors = stderr.readlines()
-            output = stdout.readlines()
-            outputs.append(output)
-            if errors:
-                raise Exception(errors)
-            # print(output)
-        return outputs
-    except Exception as e:
-        logging.error(f"Error: {e}")
-        raise
-    finally:
-        ssh.close()
-
-
-def main():
-    parser = build_parser()
-    args = parser.parse_args()
-    setup_logger(args.verbose)
-    logging.info("Starting")
-
-    if args.subcommand == "remote-mode":
-        commands = create_commands(args.groups, args.bootstrap_server)
-        remote_details = parse_remote(args.remote, args.key_filename)
-        command_outputs = run_remote_commands(remote_details, commands)
-        df = combine_kafka_outputs(command_outputs)
-    
-    elif args.subcommand == "stdin-mode":
-        lines = sys.stdin.readlines()
-        df = combine_kafka_outputs([lines])
-
-
-    # # Local testing
-    # file_list = ["example1.txt", "example2.txt"]
-    # df = pd.DataFrame()
-    # command_outputs = []
-    # for filename in file_list:
-    #     with open(filename) as fp:
-    #         lines = fp.readlines()
-    #         command_outputs.append(lines)
-    # df = combine_kafka_outputs(command_outputs)
-
-    # This is final output to stdout, this is the only place to use print. Use loggers everywhere else
-    print(tabulate(df, headers="keys", tablefmt=args.tablefmt, showindex=False))
 
 
 if __name__ == "__main__":
