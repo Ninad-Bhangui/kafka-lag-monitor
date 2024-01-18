@@ -26,9 +26,9 @@ def parse_kafka_output(output):
 def aggregate_kafka_output(kafka_entries):
     df = pd.DataFrame(kafka_entries)
     agg_df = (
-        df[["group", "topic", "lag"]]
+        df[["group", "topic", "partition" ,"lag"]]
         .groupby(by=["group", "topic"])
-        .agg(["mean", "max"])
+        .agg({'partition':'count', 'lag': ["mean", "max"]})
     )
     agg_df.columns = [f"{x}_{y}" for x, y in agg_df.columns]
     agg_df.reset_index(inplace=True)

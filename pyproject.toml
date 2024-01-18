@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "kafka-lag-monitor"
-version = "0.1.0"
+version = "0.1.1"
 description = ""
 authors = ["Ninad-Bhangui"]
 readme = "README.md"
