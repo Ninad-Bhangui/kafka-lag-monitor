@@ -1,0 +1,22 @@
+[tool.poetry]
+name = "kafka-lag-monitor"
+version = "0.1.0"
+description = ""
+authors = ["Ninad-Bhangui"]
+readme = "README.md"
+packages = [{include = "kafka_lag_monitor"}]
+
+[tool.poetry.dependencies]
+python = "^3.11"
+typer = {extras = ["all"], version = "^0.9.0"}
+rich = "^13.7.0"
+pandas = "^2.1.4"
+tabulate = "^0.9.0"
+paramiko = "^3.4.0"
+
+[tool.poetry.scripts]
+kafka-lag-monitor = "kafka_lag_monitor.main:app"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

@@ -1,2 +1,4 @@
 .venv/
 liveexample.sh
+__pycache__
+dist/
