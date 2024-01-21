@@ -2,15 +2,16 @@ import sys
 from typing import Annotated
 from tabulate import tabulate
 import typer
-from kafka_lag_monitor.schemas import RemoteDetails
-from kafka_lag_monitor.utils import create_commands, parse_and_agg_kafka_outputs, parse_remote
+from kafka_lag_monitor.utils import (
+    create_commands,
+    parse_and_agg_kafka_outputs,
+    parse_remote,
+    run_remote_commands,
+)
 from typing import List
-import paramiko
-from rich.progress import track, Progress
 from rich import print
-from rich.console import Console
+from kafka_lag_monitor.tui import TestApp
 
-err_console = Console(stderr=True)
 
 app = typer.Typer()
 
@@ -38,13 +39,20 @@ def remote_mode(
             help="Format of output (Default: plain), other options are tabulate tablefmt options"
         ),
     ] = "plain",
+    watch: Annotated[bool, typer.Option("--watch")] = False,
 ):
     commands = create_commands(groups, bootstrap_server)
     remote_details = parse_remote(remote, key_filename)
-    command_outputs = run_remote_commands(remote_details, commands, verbose)
-    df = parse_and_agg_kafka_outputs(command_outputs)
+    if not watch:
+        command_outputs = run_remote_commands(remote_details, commands, verbose)
+        df = parse_and_agg_kafka_outputs(command_outputs)
 
-    print(tabulate(df, headers="keys", tablefmt=tablefmt, showindex=False))
+        print(tabulate(df, headers="keys", tablefmt=tablefmt, showindex=False))
+    else:
+        app = TestApp()
+        app.remote_details = remote_details
+        app.commands = commands
+        app.run()
 
 
 @app.command()
@@ -64,33 +72,5 @@ def stdin_mode(
 
     print(tabulate(df, headers="keys", tablefmt=tablefmt, showindex=False))
 
-def run_remote_commands(remote_details: RemoteDetails, commands: List[str], verbose=False):
-    print(remote_details)
-    ssh = paramiko.SSHClient()
-    ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-
-    outputs = []
-    try:
-        ssh.connect(
-            remote_details.hostname,
-            username=remote_details.username,
-            key_filename=remote_details.key_filename,
-        )
-        with Progress() as progress:
-            if verbose:
-                task = progress.add_task("Fetching kafka output...", total=len(commands))
-            for command in commands:
-                _, stdout, stderr = ssh.exec_command(command)
-                errors = stderr.readlines()
-                output = stdout.readlines()
-                outputs.append(output)
-                if verbose:
-                    progress.update(task, advance=1, description=f"Running {command}")
-                if errors:
-                    raise Exception(errors)
-            return outputs
-    except Exception as e:
-        err_console.print(f"Error: {e}")
-        raise
-    finally:
-        ssh.close()
+    for _, row in df.iterrows():
+        print(row['group'])
