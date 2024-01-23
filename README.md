@@ -38,5 +38,12 @@ poetry install
 ```
 
 ## TODO
-1. Explore using tui which can monitor lag live by recording last n entries and calculating lag increase/decrease.
+1. ~~Explore using tui which can monitor lag live by recording last n entries and calculating lag increase/decrease.~~ Live TUI Created. lag increase/decrease pending.
 2. Currently stdin-mode supports only one file? Look for ways to concat multiple outputs and aggregate?
+3. Test cases
+4. monitor locally?
+5. fake lag generator for testing
+6. Currently refresh interval is hardcoded. (It breaks if the refresh of data taks longer than interval. FIX IT)
+7. re-use ssh connection across calls in tui-mode. (Might need major refactor)
+8. Make it look better. (hello darkness (css/tcss) my old friend)
+9. Ability to toggle select/deselect of kafka groups during watch mode.
