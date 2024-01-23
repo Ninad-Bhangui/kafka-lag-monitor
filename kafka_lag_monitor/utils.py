@@ -4,6 +4,7 @@ from typing import List
 import paramiko
 from rich.progress import Progress
 from rich.console import Console
+from kafka_lag_monitor.progress_bar import DummyProgressor, Progressor
 
 err_console = Console(stderr=True)
 
@@ -55,7 +56,7 @@ def parse_remote(remote: str, keyfile: str) -> RemoteDetails:
             "Invalid remote, should be of the format username@ip-address, example ubuntu@127.0.0.1"
         )
 
-def run_remote_commands(remote_details: RemoteDetails, commands: List[str], verbose=False):
+def run_remote_commands(remote_details: RemoteDetails, commands: List[str], verbose=False, progress: Progressor = DummyProgressor()):
     print(remote_details)
     ssh = paramiko.SSHClient()
     ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
@@ -67,16 +68,14 @@ def run_remote_commands(remote_details: RemoteDetails, commands: List[str], verb
             username=remote_details.username,
             key_filename=remote_details.key_filename,
         )
-        with Progress() as progress:
-            if verbose:
-                task = progress.add_task("Fetching kafka output...", total=len(commands))
+        with progress:
             for command in commands:
                 _, stdout, stderr = ssh.exec_command(command)
                 errors = stderr.readlines()
                 output = stdout.readlines()
                 outputs.append(output)
                 if verbose:
-                    progress.update(task, advance=1, description=f"Running {command}")
+                    progress.advance()
                 if errors:
                     raise Exception(errors)
             return outputs

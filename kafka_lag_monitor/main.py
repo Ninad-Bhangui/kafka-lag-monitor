@@ -2,6 +2,7 @@ import sys
 from typing import Annotated
 from tabulate import tabulate
 import typer
+from kafka_lag_monitor.progress_bar import CliProgressor, DummyProgressor
 from kafka_lag_monitor.utils import (
     create_commands,
     parse_and_agg_kafka_outputs,
@@ -44,7 +45,12 @@ def remote_mode(
     commands = create_commands(groups, bootstrap_server)
     remote_details = parse_remote(remote, key_filename)
     if not watch:
-        command_outputs = run_remote_commands(remote_details, commands, verbose)
+        if verbose:
+            progressor = CliProgressor("Fetching kafka output from remote...", commands)
+        else:
+            progressor = DummyProgressor()
+        
+        command_outputs = run_remote_commands(remote_details, commands, verbose, progressor)
         df = parse_and_agg_kafka_outputs(command_outputs)
 
         print(tabulate(df, headers="keys", tablefmt=tablefmt, showindex=False))
