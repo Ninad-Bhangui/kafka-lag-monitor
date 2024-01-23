@@ -74,8 +74,7 @@ def run_remote_commands(remote_details: RemoteDetails, commands: List[str], verb
                 errors = stderr.readlines()
                 output = stdout.readlines()
                 outputs.append(output)
-                if verbose:
-                    progress.advance()
+                progress.advance()
                 if errors:
                     raise Exception(errors)
             return outputs

@@ -3,6 +3,11 @@ from abc import ABC
 from typing import List, Optional, Type
 from types import TracebackType
 
+# from textual.app import App, ComposeResult
+# from textual.containers import Center, VerticalScroll
+# from textual.widgets import Button, Header, Input, Label, ProgressBar
+from textual.widgets import ProgressBar
+
 
 class Progressor(ABC):
     def __enter__(self):
@@ -68,17 +73,24 @@ class CliProgressor(Progressor):
         self.counter += 1
 
 
-# with Progress() as progress:
-#             if verbose:
-#                 task = progress.add_task("Fetching kafka output...", total=len(commands))
-#             for command in commands:
-#                 _, stdout, stderr = ssh.exec_command(command)
-#                 errors = stderr.readlines()
-#                 output = stdout.readlines()
-#                 outputs.append(output)
-#                 if verbose:
-#                     progress.update(task, advance=1, description=f"Running {command}")
-#                 if errors:
-#                     raise Exception(errors)
-#             return outputs
-#
+class TuiProgressor(Progressor):
+    # total: int
+    progress_bar: ProgressBar
+
+    def __init__(self, total) -> None:
+        # self.total = total
+        self.progress_bar = ProgressBar(total=total, show_eta=False)
+
+    def __enter__(self):
+        pass
+
+    def __exit__(
+        self,
+        exc_type: Optional[Type[BaseException]],
+        exc_val: Optional[BaseException],
+        exc_tb: Optional[TracebackType],
+    ):
+        pass
+
+    def advance(self):
+        self.progress_bar.advance(1)
