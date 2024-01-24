@@ -41,6 +41,7 @@ def remote_mode(
         ),
     ] = "plain",
     watch: Annotated[bool, typer.Option("--watch")] = False,
+    refresh_interval_seconds: Annotated[float, typer.Option("--refresh-interval")] = 25.0
 ):
     commands = create_commands(groups, bootstrap_server)
     remote_details = parse_remote(remote, key_filename)
@@ -58,6 +59,7 @@ def remote_mode(
         app = TestApp()
         app.remote_details = remote_details
         app.commands = commands
+        app.refresh_interval_seconds =  refresh_interval_seconds
         app.run()
 
 

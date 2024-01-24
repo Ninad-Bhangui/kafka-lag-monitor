@@ -1,13 +1,15 @@
 from typing import List
 from textual.app import App, ComposeResult
+from textual.timer import Timer
 from textual.widgets import Header, Footer, DataTable, ProgressBar
 from textual.containers import ScrollableContainer
-from kafka_lag_monitor.main import run_remote_commands
+from kafka_lag_monitor.utils import run_remote_commands
 from kafka_lag_monitor.progress_bar import TuiProgressor
 from textual import work
 
 from kafka_lag_monitor.schemas import RemoteDetails
 from kafka_lag_monitor.utils import parse_and_agg_kafka_outputs
+import time
 
 class TestApp(App):
     """A textual app to manage stopwatches"""
@@ -16,6 +18,8 @@ class TestApp(App):
     commands: List[str]
     progressor: TuiProgressor
     table: DataTable
+    refresh_interval_seconds: float = 25
+    refresh_interval: Timer
 
     BINDINGS = [
         ("d", "toggle_dark", "Toggle dark mode"),
@@ -38,10 +42,11 @@ class TestApp(App):
 
     def on_mount(self) -> None:
         self._refresh_data()    #Initial refresh
-        self.set_interval(15, self._refresh_data)    #Set interval for every 5s (TODO: Maybe configurable?)
+        self.refresh_interval = self.set_interval(self.refresh_interval_seconds, self._refresh_data)    #Set interval for every 5s (TODO: Maybe configurable?)
 
     @work(exclusive=True, thread=True)
     def _refresh_data(self):
+        start = time.time()
         self.progressor.progress_bar.update(progress=0)
         command_outputs = run_remote_commands(
             self.remote_details, self.commands, False, self.progressor
@@ -59,7 +64,11 @@ class TestApp(App):
             self.table.add_row(
                 *tupled_row, key=f"{row['group']}-{row['topic']}"
             )  # TODO: better way to convert
-
+        end = time.time()
+        print(f"time taken for _refresh_data in _refresh_data is: {end - start}")
+        # self.refresh_interval_seconds = (end - start) + 2
+        # self.refresh_interval._interval = self.refresh_interval_seconds
+        # self.refresh_interval.reset()
 
 if __name__ == "__main__":
     app = TestApp()
