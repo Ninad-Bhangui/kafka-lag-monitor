@@ -3,13 +3,17 @@ from textual.app import App, ComposeResult
 from textual.timer import Timer
 from textual.widgets import Header, Footer, DataTable, ProgressBar
 from textual.containers import ScrollableContainer
-from kafka_lag_monitor.utils import run_remote_commands
+from kafka_lag_monitor.utils import (
+    run_remote_commands,
+    run_remote_commands_concurrently,
+)
 from kafka_lag_monitor.progress_bar import TuiProgressor
 from textual import work
 
 from kafka_lag_monitor.schemas import RemoteDetails
 from kafka_lag_monitor.utils import parse_and_agg_kafka_outputs
 import time
+
 
 class TestApp(App):
     """A textual app to manage stopwatches"""
@@ -20,6 +24,7 @@ class TestApp(App):
     table: DataTable
     refresh_interval_seconds: float = 25
     refresh_interval: Timer
+    concurrent: bool = False
 
     BINDINGS = [
         ("d", "toggle_dark", "Toggle dark mode"),
@@ -41,16 +46,24 @@ class TestApp(App):
         self._refresh_data()
 
     def on_mount(self) -> None:
-        self._refresh_data()    #Initial refresh
-        self.refresh_interval = self.set_interval(self.refresh_interval_seconds, self._refresh_data)    #Set interval for every 5s (TODO: Maybe configurable?)
+        self._refresh_data()  # Initial refresh
+        self.refresh_interval = self.set_interval(
+            self.refresh_interval_seconds, self._refresh_data
+        )  # Set interval for every 5s (TODO: Maybe configurable?)
 
     @work(exclusive=True, thread=True)
     def _refresh_data(self):
         start = time.time()
         self.progressor.progress_bar.update(progress=0)
-        command_outputs = run_remote_commands(
-            self.remote_details, self.commands, False, self.progressor
-        )
+        if self.concurrent:
+            command_outputs = run_remote_commands_concurrently(
+                self.remote_details, self.commands, False, self.progressor
+            )
+
+        else:
+            command_outputs = run_remote_commands(
+                self.remote_details, self.commands, False, self.progressor
+            )
         df = parse_and_agg_kafka_outputs(command_outputs)
         self.table.clear()
         for _, row in df.iterrows():
@@ -69,6 +82,7 @@ class TestApp(App):
         # self.refresh_interval_seconds = (end - start) + 2
         # self.refresh_interval._interval = self.refresh_interval_seconds
         # self.refresh_interval.reset()
+
 
 if __name__ == "__main__":
     app = TestApp()

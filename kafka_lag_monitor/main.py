@@ -76,6 +76,7 @@ def remote_mode(
         app.remote_details = remote_details
         app.commands = commands
         app.refresh_interval_seconds = refresh_interval_seconds
+        app.concurrent = concurrent
         app.run()
 
 
