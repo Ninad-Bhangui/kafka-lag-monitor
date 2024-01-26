@@ -8,10 +8,12 @@ from kafka_lag_monitor.utils import (
     parse_and_agg_kafka_outputs,
     parse_remote,
     run_remote_commands,
+    run_remote_commands_concurrently,
 )
 from typing import List
 from rich import print
 from kafka_lag_monitor.tui import TestApp
+import time
 
 
 app = typer.Typer()
@@ -40,26 +42,40 @@ def remote_mode(
             help="Format of output (Default: plain), other options are tabulate tablefmt options"
         ),
     ] = "plain",
+    concurrent: Annotated[bool, typer.Option(help="Run in concurrent mode")] = False,
     watch: Annotated[bool, typer.Option("--watch")] = False,
-    refresh_interval_seconds: Annotated[float, typer.Option("--refresh-interval")] = 25.0
+    refresh_interval_seconds: Annotated[
+        float, typer.Option("--refresh-interval")
+    ] = 25.0,
 ):
     commands = create_commands(groups, bootstrap_server)
     remote_details = parse_remote(remote, key_filename)
     if not watch:
+        start = time.time()
         if verbose:
             progressor = CliProgressor("Fetching kafka output from remote...", commands)
         else:
             progressor = DummyProgressor()
-        
-        command_outputs = run_remote_commands(remote_details, commands, verbose, progressor)
+
+        if concurrent:
+            command_outputs = run_remote_commands_concurrently(
+                remote_details, commands, verbose, progressor
+            )
+        else:
+            command_outputs = run_remote_commands(
+                remote_details, commands, verbose, progressor
+            )
         df = parse_and_agg_kafka_outputs(command_outputs)
+        end = time.time()
+        if verbose:
+            print(f"Time taken: {end - start} seconds")
 
         print(tabulate(df, headers="keys", tablefmt=tablefmt, showindex=False))
     else:
         app = TestApp()
         app.remote_details = remote_details
         app.commands = commands
-        app.refresh_interval_seconds =  refresh_interval_seconds
+        app.refresh_interval_seconds = refresh_interval_seconds
         app.run()
 
 
@@ -81,4 +97,4 @@ def stdin_mode(
     print(tabulate(df, headers="keys", tablefmt=tablefmt, showindex=False))
 
     for _, row in df.iterrows():
-        print(row['group'])
+        print(row["group"])
